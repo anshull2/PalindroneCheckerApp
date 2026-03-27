@@ -1,60 +1,82 @@
-import java.util.Stack;
-import java.util.Scanner;
+import java.util.*;
 
 /**
- * PalindromeChecker Class
- * Encapsulates the logic for palindrome validation.
+ * Strategy Interface
  */
-class PalindromeChecker {
+interface PalindromeStrategy {
+    boolean isValid(String input);
+}
 
-    /**
-     * Checks if a string is a palindrome using a Stack.
-     * SRP: This method only handles the validation logic.
-     */
-    public boolean checkPalindrome(String input) {
-        if (input == null || input.isEmpty()) {
-            return false;
-        }
-
-        // Clean the input: remove non-alphanumeric and convert to lowercase
-        String cleanedStr = input.replaceAll("[^a-zA-Z0-9]", "").toLowerCase();
+/**
+ * Stack-based Implementation
+ * Logic: Push all chars, then pop to compare.
+ */
+class StackStrategy implements PalindromeStrategy {
+    @Override
+    public boolean isValid(String input) {
+        String clean = input.replaceAll("[^a-zA-Z0-9]", "").toLowerCase();
         Stack<Character> stack = new Stack<>();
-
-        // Push all characters onto the stack
-        for (char c : cleanedStr.toCharArray()) {
-            stack.push(c);
-        }
-
-        // Build the reversed string by popping from the stack
-        StringBuilder reversedStr = new StringBuilder();
-        while (!stack.isEmpty()) {
-            reversedStr.append(stack.pop());
-        }
-
-        return cleanedStr.equals(reversedStr.toString());
+        for (char c : clean.toCharArray()) stack.push(c);
+        
+        StringBuilder reversed = new StringBuilder();
+        while (!stack.isEmpty()) reversed.append(stack.pop());
+        
+        return clean.equals(reversed.toString());
     }
 }
 
 /**
- * Main Application Class
+ * Deque-based Implementation
+ * Logic: Add to ends, then remove and compare from both sides simultaneously.
  */
-public class UseCase11PalindromeCheckerApp {
-    public static void main(String[] args) {
-        Scanner scanner = new Scanner(System.in);
-        PalindromeChecker checker = new PalindromeChecker();
-
-        System.out.println("--- Palindrome Checker App (OOPS Edition) ---");
-        System.out.print("Enter a string to check: ");
-        String userInput = scanner.nextLine();
-
-        boolean result = checker.checkPalindrome(userInput);
-
-        if (result) {
-            System.out.println("Result: '" + userInput + "' is a palindrome.");
-        } else {
-            System.out.println("Result: '" + userInput + "' is NOT a palindrome.");
+class DequeStrategy implements PalindromeStrategy {
+    @Override
+    public boolean isValid(String input) {
+        String clean = input.replaceAll("[^a-zA-Z0-9]", "").toLowerCase();
+        Deque<Character> deque = new LinkedList<>();
+        for (char c : clean.toCharArray()) deque.addLast(c);
+        
+        while (deque.size() > 1) {
+            if (!deque.removeFirst().equals(deque.removeLast())) {
+                return false;
+            }
         }
-
-        scanner.close();
+        return true;
     }
 }
+
+/**
+ * Context Class
+ */
+class PalindromeContext {
+    private PalindromeStrategy strategy;
+
+    public void setStrategy(PalindromeStrategy strategy) {
+        this.strategy = strategy;
+    }
+
+    public boolean executeStrategy(String input) {
+        return strategy.isValid(input);
+    }
+}
+
+/**
+ * Main Application
+ */
+public class UseCase12PalindromeCheckerApp {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        PalindromeContext context = new PalindromeContext();
+
+        System.out.println("--- Advanced Palindrome Checker (Strategy Pattern) ---");
+        System.out.print("Enter string: ");
+        String input = sc.nextLine();
+
+        System.out.println("Choose Algorithm: 1. Stack (LIFO)  2. Deque (Two-ended)");
+        int choice = sc.nextInt();
+
+        // Injecting the strategy at runtime (Polymorphism)
+        if (choice == 1) {
+            context.setStrategy(new StackStrategy());
+            System.out.println("Using Stack Strategy...");
+        } else {
